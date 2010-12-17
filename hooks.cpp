@@ -1,6 +1,8 @@
+#include <cstdlib>
 #include <map>
 #include <algorithm>
 #include <sys/syscall.h>
+#include <sys/reg.h>
 #include "hooks.hpp"
 
 #define BLOCKED ((hook_t)0)
@@ -27,6 +29,9 @@ void open_hooks()
 {
 	sort(allowed, allowed + nallowed);
 	sort(blocked, blocked + nblocked);
+	
+	hooked[SYS_open] = _open;
+	
 	initialized = true;
 }
 
@@ -48,10 +53,30 @@ bool trigger_hook(pid_t proc, long syscall)
 	return hook(proc, syscall);
 }
 
+char* read_str(pid_t p, void* addr)
+{
+	char* buff = (char*)malloc(32);
+	long offset = 0;
+	long sz = 32;
+	
+	do
+	{
+		if(offset == sz)
+			buff = (char*)realloc(buff, sz *= 2);
+			
+		buff[offset] = ptrace(PTRACE_PEEKDATA, p, (char*)addr + offset, NULL) & 0xFF;
+	} 
+	while(buff[offset++] != 0);
+	
+	return buff;
+}
+
 // hooks definitions
 
 bool _open(pid_t p, long eax)
 {
-	fprintf(stderr, "child attempted to open %s\n", ARG0(p));
+	char* str = read_str(p, (void*)ARG0(p));
+	fprintf(stderr, "child attempted to open %s\n", str);
+	free(str);
 	return true;
 }

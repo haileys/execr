@@ -20,10 +20,10 @@ bool trigger_hook(pid_t, long);
 // EDI - arg4
 #define REG(p,r) ptrace(PTRACE_PEEKUSER, (p), 4 * (r), NULL)
 
-#define ARG0(p) REG(p, ORIG_EBX)
-#define ARG1(p) REG(p, ORIG_ECX)
-#define ARG2(p) REG(p, ORIG_EDX)
-#define ARG3(p) REG(p, ORIG_ESI)
-#define ARG4(p) REG(p, ORIG_EDI)
+#define ARG0(p) REG(p, EBX)
+#define ARG1(p) REG(p, ECX)
+#define ARG2(p) REG(p, EDX)
+#define ARG3(p) REG(p, ESI)
+#define ARG4(p) REG(p, EDI)
 
 #endif
