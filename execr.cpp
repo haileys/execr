@@ -62,7 +62,7 @@ int main(int argc, char** argv)
 		rlimit mem;
 		mem.rlim_cur = MAX_MEM;
 		mem.rlim_max = MAX_MEM;
-		setrlimit(RLIMIT_MEMLOCK, &mem);
+		setrlimit(RLIMIT_AS, &mem);
 		
 		ptrace(PTRACE_TRACEME, 0, NULL, NULL);
 		execl("/prog", "prog", NULL);
