@@ -16,8 +16,8 @@
 
 #include "hooks.hpp"
 
+#define MAX_MEM 65536
 #define SETUID_TO 1002
-#define CPY_BLOCK_SZ 2048
 
 #define TRY(fn,args...) \
 	if(fn(args)) { \
@@ -58,6 +58,11 @@ int main(int argc, char** argv)
 		tm.rlim_cur = 1;
 		tm.rlim_max = 1;
 		setrlimit(RLIMIT_CPU, &tm);
+		
+		rlimit mem;
+		mem.rlim_cur = MAX_MEM;
+		mem.rlim_max = MAX_MEM;
+		setrlimit(RLIMIT_MEMLOCK, &mem);
 		
 		ptrace(PTRACE_TRACEME, 0, NULL, NULL);
 		execl("/prog", "prog", NULL);

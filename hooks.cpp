@@ -13,7 +13,7 @@
 
 using namespace std;
 
-long allowed[] = { 	SYS_access, SYS_brk, SYS_mmap2, SYS_stat64,
+long allowed[] = { 	SYS_access, SYS_mmap2, SYS_stat64,
 					SYS_read, SYS_fstat64, SYS_close, SYS_mprotect,
 					SYS_io_setup, SYS_ioctl, SYS_munmap, SYS_time,
 					SYS_exit, 
@@ -45,6 +45,7 @@ map<long,hook_t> hooked;
 
 bool _open(pid_t,long);
 bool _write(pid_t,long);
+bool _brk(pid_t,long);
 
 /// end hooks
 
@@ -56,6 +57,7 @@ void open_hooks()
 	
 	hooked[SYS_open] = _open;
 	hooked[SYS_write] = _write;
+	hooked[SYS_brk] = _brk;
 	
 	initialized = true;
 }
@@ -112,5 +114,10 @@ bool _write(pid_t p, long eax)
 {
 	if(ARG0(p) > 2)
 		return false;
+	return true;
+}
+
+bool _brk(pid_t p, long eax)
+{
 	return true;
 }
