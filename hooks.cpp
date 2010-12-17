@@ -8,13 +8,19 @@
 
 using namespace std;
 
-long allowed[] = { SYS_access, SYS_brk };
-const int nallowed = 2;
+long allowed[] = { SYS_access, SYS_brk, SYS_mmap2 };
+const int nallowed = sizeof(allowed)/sizeof(long);
 
 long blocked[] = {};
-const int nblocked = 0;
+const int nblocked = sizeof(blocked)/sizeof(long);
 
 map<long,hook_t> hooked;
+
+/// hooks
+
+bool _open(pid_t,long);
+
+/// end hooks
 
 bool initialized = false;
 void open_hooks()
@@ -40,4 +46,12 @@ bool trigger_hook(pid_t proc, long syscall)
 		return false;
 		
 	return hook(proc, syscall);
+}
+
+// hooks definitions
+
+bool _open(pid_t p, long eax)
+{
+	fprintf(stderr, "child attempted to open %s\n", ARG0(p));
+	return true;
 }
