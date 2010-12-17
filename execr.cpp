@@ -9,6 +9,8 @@
 #include <sys/wait.h>
 #include <sys/syscall.h>
 #include <sys/reg.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 #include <unistd.h>
 #include <signal.h>
 
@@ -30,7 +32,7 @@ int main(int argc, char** argv)
 {
 	if(argc < 3)
 	{
-		printf("execr <temp dir> <binary>\n");
+		printf("execr <temp dir> <bin>\n");
 		return 1;
 	}
 
@@ -52,6 +54,11 @@ int main(int argc, char** argv)
 	
 	if(child == 0)
 	{
+		rlimit tm;
+		tm.rlim_cur = 1;
+		tm.rlim_max = 1;
+		setrlimit(RLIMIT_CPU, &tm);
+		
 		ptrace(PTRACE_TRACEME, 0, NULL, NULL);
 		execl("/prog", "prog", NULL);
 		return 1; // if exec is unsuccessful, bail out
@@ -59,7 +66,7 @@ int main(int argc, char** argv)
 	
 	// do one cycle of ptrace trapping to let the child exec the target process
 	wait(NULL);
-	assert(ptrace(PTRACE_PEEKUSER, child, 4 * ORIG_EAX, NULL) == 11); // sys_execve
+	assert(ptrace(PTRACE_PEEKUSER, child, 4 * ORIG_EAX, NULL) == 11);
 	ptrace(PTRACE_SYSCALL, child, NULL, NULL); // skip the return value, we don't care
 	ptrace(PTRACE_SYSCALL, child, NULL, NULL);
 		
@@ -70,6 +77,12 @@ int main(int argc, char** argv)
 		
 		if(WIFEXITED(status))
 			return 0;
+			
+		if(WIFSIGNALED(status))
+		{
+			fprintf(stderr, "child reached time limit, or was terminated by a signal\n");
+			return 1;
+		}
 			
 		long syscall_num = ptrace(PTRACE_PEEKUSER, child, 4 * ORIG_EAX, NULL);
 		
