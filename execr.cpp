@@ -16,7 +16,7 @@
 
 #include "hooks.hpp"
 
-#define MAX_MEM 65536
+#define MAX_MEM (65536*1024)
 #define SETUID_TO 1002
 
 #define TRY(fn,args...) \
@@ -71,7 +71,12 @@ int main(int argc, char** argv)
 	
 	// do one cycle of ptrace trapping to let the child exec the target process
 	wait(NULL);
-	assert(ptrace(PTRACE_PEEKUSER, child, 4 * ORIG_EAX, NULL) == 11);
+	long orig_syscall = ptrace(PTRACE_PEEKUSER, child, 4 * ORIG_EAX, NULL);
+	if(orig_syscall != 11)
+	{
+		fprintf(stderr, "Expecting execve (11), got: %ld\n", orig_syscall);
+		return 1;
+	}
 	ptrace(PTRACE_SYSCALL, child, NULL, NULL); // skip the return value, we don't care
 	ptrace(PTRACE_SYSCALL, child, NULL, NULL);
 		

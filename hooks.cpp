@@ -16,7 +16,8 @@ using namespace std;
 long allowed[] = { 	SYS_access, SYS_mmap2, SYS_stat64,
 					SYS_read, SYS_fstat64, SYS_close, SYS_mprotect,
 					SYS_io_setup, SYS_ioctl, SYS_munmap, SYS_time,
-					SYS_exit, 
+					SYS_exit, SYS_gettimeofday, SYS_readlink,
+					SYS__llseek, SYS_getrusage, SYS_sigaltstack,
 					243, // io_setup
 					258, // timer_delete
 					311, // getcpu
