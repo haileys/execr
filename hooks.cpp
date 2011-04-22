@@ -18,6 +18,8 @@ long allowed[] = { 	SYS_access, SYS_mmap2, SYS_stat64,
 					SYS_io_setup, SYS_ioctl, SYS_munmap, SYS_time,
 					SYS_exit, SYS_gettimeofday, SYS_readlink,
 					SYS__llseek, SYS_getrusage, SYS_sigaltstack,
+					__NR_getpid, __NR_getppid, __NR_getpgrp,
+					__NR_nanosleep, __NR_getcwd,
 					243, // io_setup
 					258, // timer_delete
 					311, // getcpu

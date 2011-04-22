@@ -1,2 +1,2 @@
 g++ -o execr execr.cpp hooks.cpp
-cp execr /usr/bin/execr
+#cp execr /usr/bin/execr

@@ -28,36 +28,46 @@
 int chroot(const char*);
 int kill(pid_t, int);
 
+pid_t child;
+
+void alarm_handler(int sig)
+{
+	kill(child, 9);
+}
+
 int main(int argc, char** argv)
 {
-	if(argc < 3)
+	if(argc < 2)
 	{
-		printf("execr <temp dir> <bin>\n");
+		printf("execr <bin>\n");
 		return 1;
 	}
 
-	char* bin = (char*)malloc(strlen(argv[1]) + 10);
-	strcpy(bin, argv[1]);
-	strcat(bin, "/prog");
+	//char* bin = (char*)malloc(strlen(argv[1]) + 10);
+	//strcpy(bin, argv[1]);
+	//strcat(bin, "/prog");
+
 	
-	unlink(bin);
-	link(argv[2], bin);
+	//unlink(bin);
+	//link(argv[2], bin);
 	
-	chmod(bin, S_IXUSR | S_IRUSR | S_IXGRP | S_IRGRP | S_IXOTH | S_IROTH); // allow rx to all
+	//chmod(bin, S_IXUSR | S_IRUSR | S_IXGRP | S_IRGRP | S_IXOTH | S_IROTH); // allow rx to all
 	
-	TRY(chroot, argv[1]);
-	TRY(setuid, SETUID_TO);
-	TRY(chdir, "/");
+	//TRY(chroot, argv[1]);
+	//TRY(setuid, SETUID_TO);
+	//TRY(chdir, "/");
 
 	pid_t parent = getpid();
-	pid_t child = fork();
+	child = fork();
 	
 	if(child == 0)
 	{
+		/*
 		rlimit tm;
 		tm.rlim_cur = 1;
 		tm.rlim_max = 1;
 		setrlimit(RLIMIT_CPU, &tm);
+		*/
 		
 		rlimit mem;
 		mem.rlim_cur = MAX_MEM;
@@ -65,12 +75,16 @@ int main(int argc, char** argv)
 		setrlimit(RLIMIT_AS, &mem);
 		
 		ptrace(PTRACE_TRACEME, 0, NULL, NULL);
-		execl("/prog", "prog", NULL);
+		execv(argv[1], argv + 1);
 		return 1; // if exec is unsuccessful, bail out
 	}
 	
 	// do one cycle of ptrace trapping to let the child exec the target process
 	wait(NULL);
+		
+	alarm(1);
+	signal(SIGALRM, alarm_handler);
+	
 	long orig_syscall = ptrace(PTRACE_PEEKUSER, child, 4 * ORIG_EAX, NULL);
 	if(orig_syscall != 11)
 	{
@@ -90,7 +104,7 @@ int main(int argc, char** argv)
 			
 		if(WIFSIGNALED(status))
 		{
-			fprintf(stderr, "child reached time limit, or was terminated by a signal\n");
+			fprintf(stderr, "!!TIMEOUT!! child reached time limit or was terminated by a signal\n");
 			return 1;
 		}
 			
@@ -98,7 +112,7 @@ int main(int argc, char** argv)
 		
 		if(!trigger_hook(child, syscall_num))
 		{
-			fprintf(stderr, "Child attempted blocked syscall: %ld\n", syscall_num);
+			fprintf(stderr, "!!UNSAFE!! Child attempted blocked syscall: %ld\n", syscall_num);
 			kill(child, SIGKILL);
 			return 1;
 		}
